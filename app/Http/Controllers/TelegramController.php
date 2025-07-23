@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
 
 class TelegramController extends Controller
 {
@@ -21,27 +22,38 @@ class TelegramController extends Controller
         $text   = $update['message']['text'] ?? '';
 
         if ($text === '/start') {
-            $user = [
-                'telegram_id' => $chatId,
-                'name' => $update['message']['chat']['first_name'],
-                'subscribed' => true,
-            ];
-//            User::updateOrCreate(
-//                ['id' => $chatId],
-//                [
-//                    'name' => $update['message']['chat']['first_name'],
-//                    'subscribed' => true,
-//                ]);
-            $userDb = new User($user);
-            $userDb->save();
-            return response()->json($userDb->toArray(), 201);
+            User::updateOrCreate(
+                ['telegram_id' => $chatId],
+                [
+                    'name'       => $update['message']['chat']['first_name'],
+                    'subscribed' => true,
+                ]);
+
+            $this->sendMessage($chatId, __('telegram.user.start'));
         } elseif ($text === '/stop') {
             User::updateOrCreate(
                 ['id' => $chatId],
                 [
-                    'name' => $update['message']['chat']['first_name'],
+                    'name'       => $update['message']['chat']['first_name'],
                     'subscribed' => false,
                 ]);
+
+            $this->sendMessage($chatId, __('telegram.user.stop'));
         }
+    }
+
+    public function sendMessage(int $chatId, string $text): void
+    {
+        $url = 'https://api.telegram.org/bot' . config('services.telegram.token') . '/sendMessage';
+
+        $response = Http::post($url, [
+            'chat_id' => $chatId,
+            'text'    => $text
+        ]);
+
+        \Log::info('Telegram raw response: ' . $response->body());
+
+        \Log::info('Telegram JSON:', $response->json());
+
     }
 }
