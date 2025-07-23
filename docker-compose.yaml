@@ -33,3 +33,14 @@ services:
     volumes:
       - ./:/var/www/laravel
     entrypoint: ["php", "/var/www/laravel/artisan"]
+  ngrok:
+    image: ngrok/ngrok:latest
+    command: http nginx:80 --host-header="nginx:80"
+    depends_on:
+      - nginx
+    ports:
+      - "4040:4040"     # WEB‑UI
+      - "443:443"       # HTTPS
+      - "80:80"         # HTTP
+    environment:
+      NGROK_AUTHTOKEN: '${NGROK_AUTHTOKEN}'
