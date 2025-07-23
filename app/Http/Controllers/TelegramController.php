@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\SendTelegramMessageJob;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
@@ -29,7 +30,7 @@ class TelegramController extends Controller
                     'subscribed' => true,
                 ]);
 
-            $this->sendMessage($chatId, __('telegram.user.start'));
+            SendTelegramMessageJob::dispatch($chatId, __('telegram.user.start'));
         } elseif ($text === '/stop') {
             User::updateOrCreate(
                 ['id' => $chatId],
@@ -38,22 +39,8 @@ class TelegramController extends Controller
                     'subscribed' => false,
                 ]);
 
-            $this->sendMessage($chatId, __('telegram.user.stop'));
+            SendTelegramMessageJob::dispatch($chatId, __('telegram.user.stop'));
         }
     }
 
-    public function sendMessage(int $chatId, string $text): void
-    {
-        $url = 'https://api.telegram.org/bot' . config('services.telegram.token') . '/sendMessage';
-
-        $response = Http::post($url, [
-            'chat_id' => $chatId,
-            'text'    => $text
-        ]);
-
-        \Log::info('Telegram raw response: ' . $response->body());
-
-        \Log::info('Telegram JSON:', $response->json());
-
-    }
 }
