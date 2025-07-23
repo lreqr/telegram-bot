@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Jobs\SendTelegramMessageJob;
 use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Http;
 
 class TelegramController extends Controller
 {
@@ -33,7 +32,7 @@ class TelegramController extends Controller
             SendTelegramMessageJob::dispatch($chatId, __('telegram.user.start'));
         } elseif ($text === '/stop') {
             User::updateOrCreate(
-                ['id' => $chatId],
+                ['telegram_id' => $chatId],
                 [
                     'name'       => $update['message']['chat']['first_name'],
                     'subscribed' => false,

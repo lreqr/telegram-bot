@@ -6,7 +6,6 @@ use GuzzleHttp\Client;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Foundation\Bus\Dispatchable;
-use Illuminate\Support\Facades\Http;
 
 class SendTelegramMessageJob implements ShouldQueue
 {
@@ -19,14 +18,13 @@ class SendTelegramMessageJob implements ShouldQueue
     {
         $this->chatId = $chatId;
         $this->text = $text;
-        \Log::info('Bebra:', [$chatId, $text, 'https://api.telegram.org/bot' . config('services.telegram.token') . '/sendMessage']);
     }
 
     public function handle(): void
     {
         $url = 'https://api.telegram.org/bot' . config('services.telegram.token') . '/sendMessage';
         try {
-            $client = new \GuzzleHttp\Client();
+            $client = new Client();
             $response = $client->request('POST', $url, [
                 'form_params' => [
                     'chat_id' => $this->chatId,
