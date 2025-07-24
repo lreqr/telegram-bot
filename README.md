@@ -127,3 +127,6 @@ docker-compose run artisan app:notify-tasks
 ```bash
 docker-compose run artisan test
 ```
+
+### 3. POSTMAN коллекция
+https://web.postman.co/workspace/My-Workspace~c86bc3f2-0614-4ea8-87d0-8860d6300f7f/collection/30690218-845e7c29-6720-4bc6-a840-852e396df8ec?action=share&source=copy-link&creator=30690218
