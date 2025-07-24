@@ -11,8 +11,8 @@ class SendTelegramMessageJob implements ShouldQueue
 {
     use Dispatchable, Queueable;
 
-    protected int $chatId;
-    protected string $text;
+    public int $chatId;
+    public string $text;
 
     public function __construct(int $chatId, string $text)
     {
@@ -24,7 +24,7 @@ class SendTelegramMessageJob implements ShouldQueue
     {
         $url = 'https://api.telegram.org/bot' . config('services.telegram.token') . '/sendMessage';
         try {
-            $client = new Client();
+            $client = app(Client::class);
             $response = $client->request('POST', $url, [
                 'form_params' => [
                     'chat_id' => $this->chatId,

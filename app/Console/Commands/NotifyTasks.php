@@ -4,9 +4,10 @@ namespace App\Console\Commands;
 
 use App\Jobs\SendTelegramMessageJob;
 use App\Services\TaskMessageFormatter;
-use GuzzleHttp\Client;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Cache;
 
 class NotifyTasks extends Command
 {
@@ -39,10 +40,11 @@ class NotifyTasks extends Command
 
         $url = 'https://jsonplaceholder.typicode.com/todos';
         try {
-            $client = new Client();
-            $response = $client->request('GET', $url);
-            $body = $response->getBody()->getContents();
-            $data = json_decode($body);
+
+            $data = Cache::remember('tasks_from_placeholder', now()->addMinutes(10), function () use ($url) {
+                $response = Http::get($url);
+                return json_decode($response->body());
+            });
 
             if (empty($data)) {
                 return;
