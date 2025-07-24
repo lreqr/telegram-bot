@@ -1,61 +1,129 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Telegram Bot Laravel Service
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Проект представляет собой Telegram-бота на Laravel, который:
+- Обрабатывает команды `/start` и `/stop` от пользователей через Telegram Webhook.
+- Сохраняет подписчиков в базу данных.
+- По artisan команде получает список задач из внешнего API.
+- Форматирует список задач и рассылает уведомления всем подписанным пользователям.
 
-## About Laravel
+---
+## 🧰 Используемые технологии
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+- PHP 8.2
+- Laravel 12
+- MySQL 8
+- Docker & Docker Compose
+- Ngrok (для публичного доступа к Telegram Webhook)
+- Guzzle (для работы с Telegram Bot API)
+- Laravel Queue Jobs
+- Laravel Cache
+- PHPUnit
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+---
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## 🚀 Быстрый старт (через Docker)
 
-## Learning Laravel
+### 1. Клонируйте проект и перейдите в папку
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+```bash
+git clone <repo_url>
+cd telegram-bot
+cp .env.example .env //Важно добавить пароль для бд
+```
+### 2. Запуск через Docker
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+```bash
+docker-compose nginx up -d
+docker-compose run composer i
+docker-compose run artisan key:generate
+docker-compose run artisan migrate --force
+docker-compose up ngrok -d
+```
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+### 3. Привязка Telegram к нашему проекту
+Открой http://localhost:4040/ если поменял ngrok в Docker url будет другой
 
-## Laravel Sponsors
+Скопируй url пример: https://YOUR_URL.ngrok-free.app/
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+Удаление веб хука
+```bash
+ curl -X GET "https://api.telegram.org/botTELEGRAM_BOT_KEY/deleteWebhook"
+```
+Ответ должен быть такого формата
+```json
+{
+    "ok":true,
+    "result":true,
+    "description":"Webhook was deleted"
+}
+```
+Привязка веб хука
+```bash
+ curl -X GET "https://api.telegram.org/botTELEGRAM_BOT_KEY/setWebhook?url=https://YOUR_URL.ngrok-free.app/api/telegram/webhook"
+```
+Ответ должен быть такого формата
+```json
+{
+    "ok":true,
+    "result":true,
+    "description":"Webhook was set"
+}
+```
 
-### Premium Partners
+### 4. Телеграм бот 
+🤖 О самом боте
+@VladyslavAntonovBot
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+При команде /start бот отвечает:
+```text
+Юзер успешно начал пользоваться ботом ;)
+```
 
-## Contributing
+При команде /stop бот отвечает:
+```text
+Юзер покинул бота (
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+После /start пользователь сохраняется в таблицу users с флагом subscribed = true.
+После /stop — с флагом subscribed = false.
 
-## Code of Conduct
+### 5. Рассылка списка задач
+```bash
+docker-compose run artisan app:notify-tasks
+```
+#### 1. Команда запрашивает задачи по API:
+```json
+{
+    "userId": 1,
+    "id": 1,
+    "title": "delectus aut autem",
+    "completed": false
+}
+```
+#### 2.Фильтрует только незавершённые задачи (completed: false) с userId <= 5.
+#### 3.Форматирует через TaskMessageFormatter в такой вид:
+```text
+📋 *Список новых задач:*
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+👤 Пользователь #1 — delectus aut autem
+👤 Пользователь #1 — quis ut nam facilis et officia qui
+…
+```
+#### 4. Отправляет каждому подписчику через очередь SendTelegramMessageJob.
 
-## Security Vulnerabilities
+### На этом весь функционал завершился, доп инфо
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+### 1. Структура таблицы `users`
 
-## License
+| Поле         | Тип           | Атрибуты         |
+|--------------|---------------|------------------|
+| id           | BIGINT (AI)   | primary key      |
+| name         | VARCHAR(255)  | not null         |
+| telegram_id  | BIGINT        | unique, not null |
+| subscribed   | BOOLEAN       | not null         |
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+### 2. Тесты
+Запуск тестов
+```bash
+docker-compose run artisan test
+```

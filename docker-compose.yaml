@@ -44,3 +44,9 @@ services:
       - "80:80"         # HTTP
     environment:
       NGROK_AUTHTOKEN: '${NGROK_AUTHTOKEN}'
+  composer:
+    build:
+      context: dockerfiles
+      dockerfile: composer.Dockerfile
+    volumes:
+      - ./:/var/www/laravel
